@@ -18,4 +18,12 @@ python -m venv .venv
 LocalDev.bat
 ```
 
+## Building an .exe
+
+```
+build.bat
+```
+
+The app is written to `dist\LocalDev\LocalDev.exe`; keep the whole `dist\LocalDev` folder together.
+
 The project list is stored in `%APPDATA%\LocalDev\projects.json`; window size and position in the registry under `HKCU\Software\LocalDev`.
