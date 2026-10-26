@@ -1,4 +1,4 @@
-"""Panel kanan: detail satu project, tombol aksi, dan log."""
+"""Right panel: one project's details, action buttons, and logs."""
 
 import os
 import re
@@ -45,7 +45,7 @@ class DetailView(QWidget):
         if info.wrangler:
             cards.addWidget(self._wrangler_card())
         if info.migrations:
-            cards.addWidget(self._target_card("Migrasi database", info.migrations))
+            cards.addWidget(self._target_card("Database migrations", info.migrations))
         if info.deploys:
             cards.addWidget(self._target_card("Deploy Cloudflare", info.deploys))
         if cards.count():
@@ -86,14 +86,14 @@ class DetailView(QWidget):
         self.dev_btn = QPushButton()
         self.dev_btn.setObjectName("primary")
         self.dev_btn.clicked.connect(lambda: self.info.dev and self._toggle(self.info.dev))
-        self.browser_btn = QPushButton("Buka browser")
+        self.browser_btn = QPushButton("Open browser")
         self.browser_btn.clicked.connect(self._open_browser)
         folder_btn = QPushButton("Folder")
         folder_btn.clicked.connect(lambda: os.startfile(self.path))
         code_btn = QPushButton("VS Code")
         code_btn.clicked.connect(self._open_code)
-        reload_btn = QPushButton("Muat ulang")
-        reload_btn.setToolTip("Baca ulang package.json")
+        reload_btn = QPushButton("Reload")
+        reload_btn.setToolTip("Re-read package.json")
         reload_btn.clicked.connect(lambda: self.reload_requested.emit(self.path))
         for btn in (self.dev_btn, self.browser_btn, folder_btn, code_btn, reload_btn):
             box.addWidget(btn)
@@ -102,10 +102,10 @@ class DetailView(QWidget):
     def _wrangler_card(self) -> QGroupBox:
         group = QGroupBox("Wrangler")
         layout = QVBoxLayout(group)
-        self.wrangler_status = QLabel("Memeriksa login…")
+        self.wrangler_status = QLabel("Checking login…")
         layout.addWidget(self.wrangler_status)
         row = QHBoxLayout()
-        for key, label in (("whoami", "Cek"), ("login", "Login"), ("logout", "Logout")):
+        for key, label in (("whoami", "Check"), ("login", "Login"), ("logout", "Logout")):
             row.addWidget(self._action_button(WRANGLER[key], label))
         row.addStretch()
         layout.addLayout(row)
@@ -123,7 +123,7 @@ class DetailView(QWidget):
         return group
 
     def _scripts_card(self) -> QGroupBox:
-        group = QGroupBox("Script lain")
+        group = QGroupBox("Other scripts")
         grid = QGridLayout(group)
         for i, action in enumerate(self.info.scripts):
             grid.addWidget(self._action_button(action, action.label), i // SCRIPT_COLUMNS, i % SCRIPT_COLUMNS)
@@ -132,7 +132,7 @@ class DetailView(QWidget):
     def _log_panel(self) -> QTabWidget:
         self.tabs = QTabWidget()
         self.tabs.setDocumentMode(True)
-        clear = QPushButton("Bersihkan")
+        clear = QPushButton("Clear")
         clear.clicked.connect(self._clear_log)
         self.tabs.setCornerWidget(clear)
         return self.tabs
@@ -159,7 +159,7 @@ class DetailView(QWidget):
         self._sync_tab(key)
         return view, True
 
-    # --- aksi ---
+    # --- actions ---
 
     def _toggle(self, action: Action):
         if self.runner.is_running(self.path, action.key):
@@ -173,12 +173,12 @@ class DetailView(QWidget):
     def _confirm(self, action: Action) -> bool:
         if action.target == "production":
             text, ok = QInputDialog.getText(
-                self, "Konfirmasi production",
-                f"Perintah ini mengubah PRODUCTION:\n{action.command}\n\n"
-                f"Ketik nama project ({self.info.name}) untuk lanjut:")
+                self, "Confirm production",
+                f"This command changes PRODUCTION:\n{action.command}\n\n"
+                f"Type the project name ({self.info.name}) to continue:")
             return ok and text.strip() == self.info.name
         if action.danger:
-            answer = QMessageBox.question(self, "Konfirmasi", f"Jalankan perintah ini?\n\n{action.command}")
+            answer = QMessageBox.question(self, "Confirm", f"Run this command?\n\n{action.command}")
             return answer == QMessageBox.StandardButton.Yes
         return True
 
@@ -195,7 +195,7 @@ class DetailView(QWidget):
             self.runner.clear(self.path, view.property("key"))
             view.clear()
 
-    # --- sinyal runner ---
+    # --- runner signals ---
 
     def _on_output(self, project: str, key: str, text: str):
         if project != self.path:
@@ -235,18 +235,18 @@ class DetailView(QWidget):
         if project == self.path and self.info.dev and key == self.info.dev.key:
             self._sync_dev()
 
-    # --- sinkron tampilan ---
+    # --- view sync ---
 
     def _show_whoami(self, code: int):
         log = self.runner.log(self.path, WRANGLER["whoami"].key)
         if "not authenticated" in log.lower() or "not logged in" in log.lower():
-            self.wrangler_status.setText("Belum login")
+            self.wrangler_status.setText("Not logged in")
         elif m := EMAIL.search(log):
-            self.wrangler_status.setText(f"Login sebagai {m.group(0).rstrip('.')}")
+            self.wrangler_status.setText(f"Logged in as {m.group(0).rstrip('.')}")
         elif code == 0:
-            self.wrangler_status.setText("Sudah login")
+            self.wrangler_status.setText("Logged in")
         else:
-            self.wrangler_status.setText("Gagal cek login, lihat log")
+            self.wrangler_status.setText("Login check failed, see log")
 
     def _sync_button(self, key: str):
         btn, label = self.buttons[key]
@@ -260,7 +260,7 @@ class DetailView(QWidget):
     def _sync_dev(self):
         dev = self.info.dev
         if not dev:
-            self.dev_btn.setText("Tidak ada script dev")
+            self.dev_btn.setText("No dev script")
             self.dev_btn.setEnabled(False)
             self.browser_btn.setEnabled(False)
             return

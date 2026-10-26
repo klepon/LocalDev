@@ -1,4 +1,4 @@
-"""Daftar folder project, disimpan di %APPDATA%\\LocalDev\\projects.json."""
+"""Project folder list, stored in %APPDATA%\\LocalDev\\projects.json."""
 
 import json
 import os

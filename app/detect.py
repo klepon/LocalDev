@@ -1,4 +1,4 @@
-"""Baca package.json project dan kelompokkan script jadi aksi: dev, migrasi, wrangler, lainnya."""
+"""Read a project's package.json and group its scripts into actions: dev, migrations, deploys, wrangler, others."""
 
 import json
 import re
@@ -11,8 +11,8 @@ class Action:
     key: str
     label: str
     command: str
-    target: str = ""      # migrasi: local/staging/remote/production, deploy: preview/production
-    danger: bool = False  # minta konfirmasi sebelum jalan
+    target: str = ""      # migration: local/staging/remote/production, deploy: preview/production
+    danger: bool = False  # ask for confirmation before running
 
 
 @dataclass
@@ -89,10 +89,10 @@ def detect(path: str) -> ProjectInfo:
     try:
         pkg = json.loads((root / "package.json").read_text(encoding="utf-8"))
     except FileNotFoundError:
-        info.error = "package.json tidak ditemukan."
+        info.error = "package.json not found."
         return info
     except (OSError, ValueError) as e:
-        info.error = f"package.json tidak bisa dibaca: {e}"
+        info.error = f"Cannot read package.json: {e}"
         return info
 
     info.name = pkg.get("name") or root.name
@@ -107,7 +107,7 @@ def detect(path: str) -> ProjectInfo:
 
     migration_names = [n for n, c in scripts.items() if "migrations apply" in c]
     deploy_names = [n for n, c in scripts.items() if DEPLOY_COMMAND.search(c)]
-    # Script seperti "db:remote": "npm run db:production" cuma alias, jangan dobel tombol.
+    # Scripts like "db:remote": "npm run db:production" are just aliases; don't show duplicate buttons.
     grouped = {*migration_names, *deploy_names}
     aliases = {n for n, c in scripts.items() if (m := ALIAS.match(c.strip())) and m.group(1) in grouped}
 

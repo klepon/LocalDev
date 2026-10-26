@@ -1,4 +1,4 @@
-"""Jendela utama: daftar project di kiri, detail di kanan."""
+"""Main window: project list on the left, details on the right."""
 
 from pathlib import Path
 
@@ -45,15 +45,15 @@ class MainWindow(QMainWindow):
 
         self.list = QListWidget()
         self.list.currentItemChanged.connect(self._on_select)
-        add_btn = QPushButton("+ Tambah project")
+        add_btn = QPushButton("+ Add project")
         add_btn.clicked.connect(self._add)
-        self.remove_btn = QPushButton("Hapus")
+        self.remove_btn = QPushButton("Remove")
         self.remove_btn.clicked.connect(self._remove)
 
         left = QWidget()
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(12, 12, 4, 12)
-        heading = QLabel("Project")
+        heading = QLabel("Projects")
         heading.setObjectName("heading")
         left_layout.addWidget(heading)
         left_layout.addWidget(self.list, 1)
@@ -63,7 +63,7 @@ class MainWindow(QMainWindow):
         left_layout.addLayout(row)
 
         self.stack = QStackedWidget()
-        self.empty = QLabel("Tambahkan folder project untuk mulai.")
+        self.empty = QLabel("Add a project folder to get started.")
         self.empty.setObjectName("muted")
         self.empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.stack.addWidget(self.empty)
@@ -83,7 +83,7 @@ class MainWindow(QMainWindow):
             self.list.setCurrentRow(0)
         self.remove_btn.setEnabled(self.list.currentItem() is not None)
 
-    # --- daftar ---
+    # --- list ---
 
     def _paths(self) -> list[str]:
         return [self.list.item(i).data(PATH_ROLE) for i in range(self.list.count())]
@@ -110,12 +110,12 @@ class MainWindow(QMainWindow):
             item.setIcon(dot("#16a34a" if self.runner.running(path) else "#9ca3af"))
 
     def _add(self):
-        folder = QFileDialog.getExistingDirectory(self, "Pilih folder project")
+        folder = QFileDialog.getExistingDirectory(self, "Select project folder")
         if not folder:
             return
         path = str(Path(folder).resolve())
         if not (Path(path) / "package.json").is_file():
-            QMessageBox.warning(self, "LocalDev", "Folder ini tidak punya package.json.")
+            QMessageBox.warning(self, "LocalDev", "This folder has no package.json.")
             return
         item = self._item(path) or self._add_item(path)
         store.save(self._paths())
@@ -127,8 +127,8 @@ class MainWindow(QMainWindow):
             return
         path = item.data(PATH_ROLE)
         answer = QMessageBox.question(
-            self, "Hapus project",
-            f"Hapus {self.infos[path].name} dari daftar?\nFolder project tidak ikut dihapus.")
+            self, "Remove project",
+            f"Remove {self.infos[path].name} from the list?\nThe project folder will not be deleted.")
         if answer != QMessageBox.StandardButton.Yes:
             return
         self.runner.stop_project(path)
@@ -169,7 +169,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         if self.runner.any_running():
             answer = QMessageBox.question(
-                self, "Keluar", "Masih ada proses berjalan. Hentikan semua lalu keluar?",
+                self, "Quit", "Some processes are still running. Stop them all and quit?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
             if answer != QMessageBox.StandardButton.Yes:
                 event.ignore()

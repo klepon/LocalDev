@@ -1,4 +1,4 @@
-"""Jalankan perintah project lewat QProcess, simpan log, dan matikan beserta proses anaknya."""
+"""Run project commands through QProcess, keep their logs, and kill them along with child processes."""
 
 import codecs
 import re
@@ -13,7 +13,7 @@ URL = re.compile(r"https?://(?:localhost|127\.0\.0\.1):\d+/?")
 MAX_LOG = 400_000
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
-Key = tuple[str, str]  # (path project, key aksi)
+Key = tuple[str, str]  # (project path, action key)
 
 
 class Runner(QObject):
@@ -57,7 +57,7 @@ class Runner(QObject):
         if (project, key) in self._logs:
             self._logs[(project, key)] = ""
 
-    # --- kontrol ---
+    # --- control ---
 
     def start(self, project: str, action: Action):
         k = (project, action.key)
@@ -93,7 +93,7 @@ class Runner(QObject):
             return
         pid = proc.processId()
         if pid:
-            # cmd -> npm -> node -> workerd: matikan satu pohon proses sekaligus.
+            # cmd -> npm -> node -> workerd: kill the whole process tree at once.
             subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"],
                            capture_output=True, creationflags=NO_WINDOW)
         else:
@@ -133,12 +133,12 @@ class Runner(QObject):
             return
         self._read(k)
         self._append(k, self._decoders[k].decode(b"", final=True))
-        self._append(k, f"\n[selesai, kode {code}]\n")
+        self._append(k, f"\n[exited with code {code}]\n")
         self._finish(k, code)
 
     def _error(self, k: Key, err):
         if err == QProcess.ProcessError.FailedToStart and k in self._procs:
-            self._append(k, "\n[gagal menjalankan perintah]\n")
+            self._append(k, "\n[failed to start command]\n")
             self._finish(k, -1)
 
     def _finish(self, k: Key, code: int):
