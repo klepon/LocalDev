@@ -1,8 +1,14 @@
+import ctypes
 import sys
+from pathlib import Path
 
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from app.ui.main_window import MainWindow
+
+# PyInstaller unpacks bundled files into sys._MEIPASS.
+BASE = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 
 STYLE = """
 QLabel#title { font-size: 18px; font-weight: 600; }
@@ -18,8 +24,11 @@ QGroupBox { font-weight: 600; }
 
 
 def main():
+    # Own taskbar identity, so the taskbar shows LocalDev's icon instead of python's.
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("LocalDev")
     app = QApplication(sys.argv)
     app.setApplicationName("LocalDev")
+    app.setWindowIcon(QIcon(str(BASE / "assets" / "icon.ico")))
     app.setStyle("Fusion")
     app.setStyleSheet(STYLE)
     window = MainWindow()
